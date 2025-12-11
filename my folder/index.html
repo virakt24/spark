@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spark AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        'te-bg': '#f0f0f0',
+                        'te-black': '#111111',
+                        'apple-blue': '#0071e3', 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            color: #111;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #888; }
+
+        /* Button States */
+        .tab-active {
+            background-color: #111;
+            color: #fff;
+        }
+        .tab-inactive {
+            background-color: #fff;
+            color: #888;
+        }
+        .tab-inactive:hover {
+            color: #111;
+            background-color: #f9f9f9;
+        }
+        
+        /* Icon styling */
+        .ph {
+            vertical-align: middle;
+        }
+
+        /* Loading Animation */
+        .loading-pulse {
+            animation: pulse-opacity 1.5s infinite;
+        }
+        @keyframes pulse-opacity {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-12 px-4 flex flex-col items-center">
+
+    <div class="w-full max-w-6xl border border-te-black bg-white shadow-sm">
+        
+        <header class="grid grid-cols-1 md:grid-cols-2 border-b border-te-black">
+            <div class="p-6 md:border-r border-te-black flex flex-col justify-center">
+                <div class="flex items-center gap-3">
+                    <h1 class="font-sans font-bold text-2xl tracking-tight text-te-black uppercase">Spark <span class="text-apple-blue text-xs align-top">AI</span></h1>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 h-full">
+                <div class="grid grid-cols-2 border-b md:border-b-0 md:border-r border-te-black">
+                    <button id="btn-product" onclick="switchMode('product')" class="tab-active font-sans text-xs font-medium uppercase tracking-wide transition-colors flex flex-col items-center justify-center gap-1">
+                        <i class="ph ph-cube text-lg"></i>
+                        <span>Product</span>
+                    </button>
+                    <button id="btn-service" onclick="switchMode('service')" class="tab-inactive font-sans text-xs font-medium uppercase tracking-wide transition-colors border-l border-te-black flex flex-col items-center justify-center gap-1">
+                        <i class="ph ph-users text-lg"></i>
+                        <span>Service</span>
+                    </button>
+                </div>
+                
+                <div class="bg-te-bg flex flex-col">
+                    <div class="flex-1 p-3 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div id="timer-display" class="font-mono text-xl font-medium tracking-wider z-10">00:00</div>
+                        <div class="flex gap-4 mt-1 z-10">
+                            <button onclick="setTimer(5)" class="text-[10px] font-sans font-medium text-neutral-500 hover:text-black">5 MIN</button>
+                            <button onclick="setTimer(10)" class="text-[10px] font-sans font-medium text-neutral-500 hover:text-black">10 MIN</button>
+                            <button onclick="toggleTimer()" id="btn-timer-toggle" class="text-[10px] font-sans font-bold text-neutral-900 hover:text-apple-blue">START</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 md:grid-cols-3 border-b border-te-black">
+            
+            <div class="p-8 md:border-r border-te-black min-h-[280px] flex flex-col hover:bg-neutral-50 transition-colors border-b md:border-b-0 relative">
+                <div class="flex items-center gap-2 text-neutral-400 h-6">
+                    <i class="ph ph-map-pin text-sm"></i>
+                    <span class="font-mono text-[9px] uppercase tracking-wider">Context</span>
+                    <span id="ai-badge" class="hidden ml-auto text-[8px] bg-apple-blue text-white px-1 py-0.5 rounded font-bold tracking-wider">AI</span>
+                </div>
+                
+                <div class="mt-8 flex-1 flex flex-col justify-center">
+                    <h2 id="display-context" class="font-sans font-semibold text-2xl lg:text-3xl text-te-black leading-tight mb-2 min-h-[3rem]">...</h2>
+                    <p id="context-desc" class="font-sans text-xs text-neutral-500 mt-2 opacity-0 transition-opacity">Indian Context</p>
+                </div>
+            </div>
+
+            <div class="p-8 md:border-r border-te-black min-h-[280px] flex flex-col hover:bg-neutral-50 transition-colors border-b md:border-b-0">
+                <div class="flex items-center gap-2 text-neutral-400 h-6">
+                    <i class="ph ph-faders text-sm"></i>
+                    <span class="font-mono text-[9px] uppercase tracking-wider">Constraint</span>
+                </div>
+                
+                <div class="mt-8 flex-1 flex flex-col justify-center">
+                    <div class="flex items-baseline gap-3 mb-2">
+                        <i id="display-icon" class="ph text-2xl text-te-black self-center"></i>
+                        <h2 id="display-constraint" class="font-sans font-semibold text-3xl text-te-black leading-tight">...</h2>
+                    </div>
+                    <p id="constraint-desc" class="font-sans text-sm text-neutral-500 mt-3 leading-relaxed">Parameter definition</p>
+                </div>
+            </div>
+
+            <div class="p-8 min-h-[280px] flex flex-col hover:bg-neutral-50 transition-colors">
+                <div class="flex items-center gap-2 text-neutral-400 h-6">
+                    <i class="ph ph-lightbulb text-sm"></i>
+                    <span class="font-mono text-[9px] uppercase tracking-wider">Strategy</span>
+                </div>
+                
+                <div class="mt-8 flex-1 flex flex-col justify-center">
+                    <h2 id="display-strategy" class="font-sans font-semibold text-3xl text-te-black leading-tight mb-2">...</h2>
+                    <p id="strategy-desc" class="font-sans text-sm text-neutral-500 mt-3 leading-relaxed">Modifier</p>
+                </div>
+            </div>
+        </section>
+
+        <button onclick="generateScenario()" id="btn-generate" class="w-full h-20 bg-white hover:bg-te-black hover:text-white transition-all duration-200 border-b border-te-black flex items-center justify-between px-8 group cursor-pointer">
+            <div class="flex items-center gap-3">
+                <i id="icon-shuffle" class="ph ph-shuffle text-xl group-hover:rotate-180 transition-transform duration-500"></i>
+                <span id="text-generate" class="font-mono text-xs uppercase tracking-widest">Generate New Spark</span>
+            </div>
+            <i class="ph ph-arrow-right text-xl group-hover:translate-x-1 transition-transform"></i>
+        </button>
+
+        <section class="bg-te-bg">
+            <div class="py-3 px-4 border-b border-te-black bg-white flex justify-between items-center">
+                <h3 class="font-mono text-[10px] uppercase tracking-widest text-neutral-500">Knowledge Database</h3>
+                <i class="ph ph-database text-neutral-400 text-sm"></i>
+            </div>
+            
+            <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-te-black border-b border-te-black">
+                </div>
+        </section>
+    </div>
+
+    <div class="mt-8 mb-4 opacity-50 hover:opacity-100 transition-opacity text-center">
+        <p class="font-mono text-[10px] text-neutral-500 uppercase tracking-widest">made by virakt</p>
+    </div>
+
+    <script>
+        // --- DATA DEFS ---
+        const appData = {
+            product: [
+                { id: 'p1', name: 'Aesthetics', desc: 'How it looks. Does the style, color, and finish match the user\'s taste and culture?', icon: 'ph-paint-brush' },
+                { id: 'p2', name: 'Function', desc: 'Does it actually work? Does it solve the main problem efficiently without failing?', icon: 'ph-gear' },
+                { id: 'p3', name: 'Ergonomics', desc: 'Comfort and fit. Is it easy to hold? Does it hurt your hand or back after using it?', icon: 'ph-chair' },
+                { id: 'p4', name: 'Maintenance', desc: 'Is it easy to clean? If it breaks, can you fix it or replace a part easily?', icon: 'ph-wrench' },
+                { id: 'p5', name: 'Sustainability', desc: 'Is it eco-friendly? What happens to the materials when you throw it away?', icon: 'ph-leaf' },
+                { id: 'p6', name: 'Form', desc: 'The physical shape and size. Is it too bulky? Is it easy to store in a small house?', icon: 'ph-cube' },
+                { id: 'p7', name: 'Usability', desc: 'Can anyone use it without confusion? Is it obvious how to turn it on?', icon: 'ph-cursor-click' },
+                { id: 'p8', name: 'Interaction', desc: 'How it feels to click, touch, or turn. Do buttons give a satisfying "click"?', icon: 'ph-sliders' },
+                { id: 'p9', name: 'Durability', desc: 'Is it tough? Will it break if I drop it or use it roughly every day?', icon: 'ph-shield' },
+                { id: 'p10', name: 'Safety', desc: 'Can it hurt you? Are there sharp edges, shock risks, or toxic parts?', icon: 'ph-warning-circle' },
+                { id: 'p11', name: 'Cost', desc: 'Is it affordable? Does it offer good value for the money spent?', icon: 'ph-currency-inr' },
+                { id: 'p12', name: 'Material', desc: 'The texture and feel. Is it plastic, metal, or wood? Is it appropriate?', icon: 'ph-wall' }
+            ],
+            service: [
+                { id: 's1', name: 'Touchpoints', desc: 'Where users meet the service. (The app screen, the counter, the ticket).', icon: 'ph-map-pin' },
+                { id: 's2', name: 'Journey', desc: 'The timeline. How long does it take from start to finish? Are there delays?', icon: 'ph-path' },
+                { id: 's3', name: 'Feedback', desc: 'Knowing what is happening. "Your order is confirmed." "Your cab is arriving."', icon: 'ph-arrows-left-right' },
+                { id: 's4', name: 'Cognitive Load', desc: 'Mental effort. Is it confusing? Do I have to remember too many things?', icon: 'ph-brain' },
+                { id: 's5', name: 'Accessibility', desc: 'Can everyone use it? (Elderly people, disabled users, or non-English speakers).', icon: 'ph-wheelchair' },
+                { id: 's6', name: 'Value', desc: 'Is the service worth the time, effort, and money the user is spending?', icon: 'ph-tag' },
+                { id: 's7', name: 'Privacy', desc: 'Is my data safe? Do I feel physically safe and secure in this space?', icon: 'ph-lock' },
+                { id: 's8', name: 'Context', desc: 'Environment. Does rain, heat, noise, or crowds ruin the experience?', icon: 'ph-sun' },
+                { id: 's9', name: 'Scalability', desc: 'What happens when 100 people show up instead of 10? Does it crash?', icon: 'ph-chart-line-up' },
+                { id: 's10', name: 'Backend', desc: 'Behind the scenes. The staff, logistics, and kitchen work that support the user.', icon: 'ph-hard-drives' },
+                { id: 's11', name: 'Trust', desc: 'Do I trust this brand? Do they keep their promises?', icon: 'ph-handshake' },
+                { id: 's12', name: 'Recovery', desc: 'If something goes wrong, how easy is it to get a refund or fix the error?', icon: 'ph-arrow-u-up-left' }
+            ]
+        };
+
+        const strategies = [
+            { title: "Substitute", desc: "Change a material, rule, or person involved." },
+            { title: "Combine", desc: "Merge this with another function or object." },
+            { title: "Adapt", desc: "Copy a solution from nature or a different context." },
+            { title: "Magnify", desc: "Exaggerate a feature. Make it huge, loud, or heavy." },
+            { title: "Minify", desc: "Make it smaller, lighter, or remove features." },
+            { title: "Repurpose", desc: "How can a child or an elderly person use this?" },
+            { title: "Eliminate", desc: "Remove the most expensive or complex part." },
+            { title: "Reverse", desc: "Do the opposite process. Turn it inside out." },
+            { title: "Automate", desc: "Remove human effort from one step." },
+            { title: "Modularize", desc: "Break it into parts that can be swapped." },
+            { title: "Sensory", desc: "Focus on smell, sound, or texture." },
+            { title: "Emotion", desc: "Design specifically to create joy or fear." }
+        ];
+
+        const fallbackContexts = [
+            "Auto Rickshaw", "Local Train", "Sleeper Bus", "Metro Gate", "Shared Tempo", "Scooter",
+            "Gas Cylinder", "Roti Tongs", "Masala Dabba", "Pressure Cooker", "Broom (Jhadu)", "Plastic Bucket",
+            "Mosquito Bat", "Tea Strainer", "Wet Grinder", "Agarbatti", "Ceiling Fan", "Tube Light",
+            "Pan Kiosk", "Veg Cart", "Chai Glass", "Cobbler Box", "Flower Stall", "Sugarcane Mill",
+            "Post Office", "Ration Shop", "Shoe Rack", "Hospital Wait", "Public Toilet", "Voting Machine",
+            "School Bag", "Tiffin", "ID Card", "Spectacle Case", "Key Chain", "Saree Pin"
+        ];
+
+        // --- STATE & CORE VARS ---
+        let state = { mode: 'product', data: [...appData.product] };
+        let timerInterval;
+        let timeRemaining = 0;
+        let isTimerRunning = false;
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCards();
+            generateScenario(); // Initial load
+        });
+
+        // --- TAB SWITCHING ---
+        function switchMode(mode) {
+            state.mode = mode;
+            state.data = mode === 'product' ? [...appData.product] : [...appData.service];
+            
+            const btnProd = document.getElementById('btn-product');
+            const btnServ = document.getElementById('btn-service');
+            
+            // Tailwind class strings
+            const activeClass = "tab-active font-sans text-xs font-medium uppercase tracking-wide transition-colors flex flex-col items-center justify-center gap-1";
+            const inactiveClass = "tab-inactive font-sans text-xs font-medium uppercase tracking-wide transition-colors flex flex-col items-center justify-center gap-1";
+            
+            if(mode === 'product') {
+                btnProd.className = activeClass;
+                btnServ.className = inactiveClass + " border-l border-te-black"; 
+            } else {
+                btnServ.className = activeClass + " border-l border-te-black";
+                btnProd.className = inactiveClass;
+            }
+            renderCards();
+            generateScenario();
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+            
+            state.data.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-6 flex flex-col justify-start gap-4 min-h-[180px]";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start w-full">
+                        <i class="ph ${item.icon} text-2xl text-neutral-800"></i>
+                        <span class="font-mono text-[9px] text-neutral-300">0${index+1}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-sans font-semibold text-xs uppercase tracking-wide mb-2 text-te-black">${item.name}</h4>
+                        <p class="font-sans text-[11px] text-neutral-500 leading-relaxed">${item.desc}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- MAIN GENERATOR LOGIC ---
+        async function generateScenario() {
+            // 1. Static Content
+            const constraint = state.data[Math.floor(Math.random() * state.data.length)];
+            const strat = strategies[Math.floor(Math.random() * strategies.length)];
+
+            document.getElementById('display-constraint').innerText = constraint.name;
+            document.getElementById('display-icon').className = `ph ${constraint.icon} text-2xl text-te-black self-center`;
+            document.getElementById('constraint-desc').innerText = constraint.desc;
+            
+            document.getElementById('display-strategy').innerText = strat.title;
+            document.getElementById('strategy-desc').innerText = strat.desc;
+
+            // 2. AI Content (via Netlify Proxy)
+            const contextDisplay = document.getElementById('display-context');
+            const contextDesc = document.getElementById('context-desc');
+            const aiBadge = document.getElementById('ai-badge');
+            const btnText = document.getElementById('text-generate');
+            const btnIcon = document.getElementById('icon-shuffle');
+
+            // UI Loading State
+            contextDisplay.classList.add('loading-pulse');
+            contextDisplay.innerText = "Thinking...";
+            contextDesc.innerText = "Consulting the infinite...";
+            contextDesc.style.opacity = 1;
+            btnText.innerText = "Dreaming...";
+            btnIcon.classList.add('animate-spin');
+            
+            try {
+                // The prompt for Gemini
+                const promptText = `Generate a unique, vivid, and specific Indian context object or environment for a product design challenge. 
+                Examples: 'Crowded Mumbai Local Train Door', 'Rusted Kerosene Stove', 'Makeshift Cricket Stumps', 'Street Side Cobbler Box', 'Overloaded Electrical Pole'.
+                Avoid generic answers. Be specific about condition (broken, old, wet, new) or location.
+                Return ONLY a JSON object: { "title": "The Object/Place", "desc": "A short 1-sentence description of the atmosphere or usage." }`;
+
+                // SECURE CALL TO NETLIFY BACKEND
+                const response = await fetch('/.netlify/functions/fetch-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptText })
+                });
+
+                if (!response.ok) throw new Error("Backend connection failed");
+
+                const data = await response.json();
+                
+                // Parse Gemini Response
+                let aiText = data.candidates[0].content.parts[0].text;
+                aiText = aiText.replace(/```json|```/g, '').trim(); 
+                const result = JSON.parse(aiText);
+
+                // Success
+                contextDisplay.innerText = result.title;
+                contextDesc.innerText = result.desc;
+                aiBadge.classList.remove('hidden');
+
+            } catch (error) {
+                console.warn("AI Unavailable (Using Offline List):", error);
+                
+                // Fallback to offline list
+                const ctx = fallbackContexts[Math.floor(Math.random() * fallbackContexts.length)];
+                contextDisplay.innerText = ctx;
+                contextDesc.innerText = "Offline Mode";
+                aiBadge.classList.add('hidden');
+            } finally {
+                // Reset UI
+                contextDisplay.classList.remove('loading-pulse');
+                btnText.innerText = "GENERATE NEW SPARK";
+                btnIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // --- TIMER LOGIC (Unchanged) ---
+        function updateTimerDisplay() {
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2,'0');
+            const s = (timeRemaining % 60).toString().padStart(2,'0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        function setTimer(min) {
+            pauseTimer();
+            timeRemaining = min * 60;
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer-toggle');
+            if(isTimerRunning) {
+                pauseTimer();
+            } else {
+                if(timeRemaining <= 0) return;
+                isTimerRunning = true;
+                btn.innerText = "STOP";
+                btn.classList.add('text-apple-blue');
+                
+                timerInterval = setInterval(() => {
+                    if(timeRemaining > 0) {
+                        timeRemaining--;
+                        updateTimerDisplay();
+                    } else {
+                        pauseTimer();
+                        alert("TIME END");
+                    }
+                }, 1000);
+            }
+        }
+
+        function pauseTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            const btn = document.getElementById('btn-timer-toggle');
+            btn.innerText = "START";
+            btn.classList.remove('text-apple-blue');
+        }
+    </script>
+</body>
+</html>
