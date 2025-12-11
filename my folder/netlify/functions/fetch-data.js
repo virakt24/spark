@@ -3,7 +3,7 @@ exports.handler = async function(event, context) {
   const API_KEY = process.env.MY_SECRET_KEY; 
 
   // 2. The Gemini API URL (Using the Flash model)
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${API_KEY}`;
 
   // 3. Get the user's prompt from the HTML request
   // (We assume the HTML sends a body like { "prompt": "Hello" })
@@ -37,4 +37,5 @@ exports.handler = async function(event, context) {
   }
 
 };
+
 
