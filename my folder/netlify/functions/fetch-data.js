@@ -12,7 +12,7 @@ exports.handler = async function(event, context) {
 
     // 3. The "Old Faithful" URL (Gemini Pro)
     // We switched from 'flash' to 'pro' because it is more stable.
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     // 4. The Data to send to Google
     const requestData = {
@@ -50,3 +50,4 @@ exports.handler = async function(event, context) {
     return { statusCode: 500, body: JSON.stringify({ error: error.toString() }) };
   }
 };
+
